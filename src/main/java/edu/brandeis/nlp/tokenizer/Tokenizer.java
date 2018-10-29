@@ -1,10 +1,13 @@
 package edu.brandeis.nlp.tokenizer;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 
 public class Tokenizer {
@@ -16,25 +19,61 @@ public class Tokenizer {
 	public int length;
 	public ArrayList<Token> tokens;
 	public ArrayList<Sentence> sentences;
-	public Token firstToken;
+    public TokenizedText result;
+	//private Token firstToken;
 
 	private final String defaultInput = "/example.txt";
-	private final String defaultOutput = "/example.tok";
 
-	public Tokenizer(String filename) throws IOException
-	{
-		if (filename == null)
-			filename = defaultInput;
-		this.filename = filename;
-		readFileContent();
+
+    public Tokenizer() { }
+
+    /**
+     * Debugging method to run the Tokenizer on the example text in the resources.
+     * @throws IOException
+     */
+    public final void test() throws IOException {
+		this.filename = defaultInput;
+		readResource();
+        tokenize();
+        this.result.printSentences();
+    }
+
+    public final TokenizedText tokenizeText(String text) {
+		this.text = text;
+        this.length = text.length();
+        tokenize();
+        return this.result;
+    }
+
+    public final TokenizedText tokenizeFile(File fname) throws IOException {
+		this.filename = fname.getAbsolutePath();
+        readFile();
+        tokenize();
+        return this.result;
+    }
+
+    public final void tokenize() {
 		this.tokens = new ArrayList<>();
 		this.sentences = new ArrayList<>();
+        this.result = new TokenizedText();
+        this.result.startTime = System.nanoTime();
 		readTokens();
 		linkTokens();
 		splitPunctuations();
 		splitSentences();
-		printSentences();
-	}
+        this.result.sentences = this.sentences;
+        this.result.tokens = this.tokens;
+        this.result.endTime = System.nanoTime();
+    }
+
+    public final void split() {
+        splitSentences();
+    }
+
+
+    public void write() {
+        this.result.printSentences();
+    }
 
 	private void readTokens() {
 		int offset = 0;
@@ -87,9 +126,9 @@ public class Tokenizer {
 		return offset;
 	}
 
-	private void readFileContent() throws IOException
+	private void readResource() throws IOException
 	{
-		//System.out.println("Reading content from " + filename);
+		// URL resource = this.getClass().getResource("/");
 		InputStream stream = this.getClass().getResourceAsStream(this.filename);
 		BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
 		StringBuilder string = new StringBuilder();
@@ -100,8 +139,13 @@ public class Tokenizer {
 		this.length = this.text.length();
 	}
 
+    private void readFile() throws FileNotFoundException {
+        this.text = new Scanner(new File(this.filename)).useDelimiter("\\A").next();
+		this.length = this.text.length();
+    }
+
 	private void linkTokens() {
-		this.firstToken = this.tokens.get(0);
+		//this.firstToken = this.tokens.get(0);
 		for (int i=0 ; i < this.tokens.size() - 1 ; i++) {
 			Token t1 = this.tokens.get(i);
 			Token t2 = this.tokens.get(i+1);
@@ -138,13 +182,19 @@ public class Tokenizer {
 			if (tok.isEOS()) {
 				sentence = new Sentence();
 				this.sentences.add(sentence); }}
+        // add begin and end character offsets
+        for (Sentence sent : this.sentences)
+            sent.setOffsets();
+        // filter out sentences without tokens
+      	ArrayList<Sentence> newSentences = new ArrayList<>();
+        for (Sentence sent : this.sentences) {
+            if (sent.length > 0)
+                newSentences.add(sent); }
+        this.sentences = newSentences;
+        //this.sentences = (ArrayList) this.sentences.stream()
+        //        .filter(s -> s.length == 0)
+        //        .collect(Collectors.toList());
 	}
 
-	public final void printSentences() {
-		for (Sentence sent : this.sentences) {
-		for (Token tok : sent.tokens)
-			System.out.println(tok);
-		System.out.println(); }
-	}
 
 }
