@@ -42,8 +42,31 @@ public class Token {
 	public int length, beginSpace, beginToken, endToken;
 	public Token previous, next;
 
-	public Token(String text, int beginSpace, int beginToken, int endToken) {
 
+	public Token(String text, int beginSpace, int beginToken, int endToken)
+	{
+		initialize(text, beginSpace, beginToken, endToken);
+	}
+
+	public Token(String text, int beginToken, int endToken)
+	{
+		initialize(text, beginToken, beginToken, endToken);
+	}
+
+	public Token(String[] args)
+	{
+		if (args.length == 3)
+			initialize(
+					args[2], Integer.parseInt(args[0]),
+					Integer.parseInt(args[0]), Integer.parseInt(args[1]));
+		else if (args.length == 4)
+			initialize(
+					args[3], Integer.parseInt(args[0]),
+					Integer.parseInt(args[1]), Integer.parseInt(args[2]));
+	}
+
+	private void initialize(String text, int beginSpace, int beginToken, int endToken)
+	{
 		this.text = text;
 		this.length = text.length();
 		this.beginSpace = beginSpace;
@@ -53,39 +76,40 @@ public class Token {
 		this.next = null;
 	}
 
-	public Token(String text, int beginToken, int endToken) {
-
-		this(text, beginToken, beginToken, endToken);
-	}
-
 	@Override
-	public String toString() {
+	public String toString()
+	{
 		return String.format(
 				"<%s %s %s %s>",
 				this.beginSpace, this.beginToken, this.endToken, this.text);
 	}
 
-	public boolean isPunctuation() {
+	public boolean isPunctuation()
+	{
 		return this.length == 1 && PUNCTUATIONS.contains(this.text);
 	}
 
-	public boolean isAbbreviation() {
+	public boolean isAbbreviation()
+	{
 		return Abbreviations.ABBREVS.contains(this.text);
 	}
 
-	public boolean isEndAbbreviation() {
+	public boolean isEndAbbreviation()
+	{
 		return Abbreviations.END_ABBREVS.contains(this.text);
 	}
 
-	public boolean isEOS() {
+	public boolean isEOS()
+	{
 		// TODO: add way to deal with sentence final abbreviations
 		return (this.length == 1 && EOS.contains(this.text))
-				|| (this.isEndAbbreviation() 
-					&& this.next != null 
+				|| (this.isEndAbbreviation()
+					&& this.next != null
 					&& Token.INITIAL_TOKENS.contains(this.next.text));
 	}
 
-	private boolean isPeriod() {
+	private boolean isPeriod()
+	{
 		return ".".equals(this.text);
 	}
 
@@ -96,8 +120,8 @@ public class Token {
 	 * can be split off.
 	 * @return An ArrayList of Tokens
 	 */
-	protected ArrayList<Token> splitPunctuations() {
-
+	protected ArrayList<Token> splitPunctuations()
+	{
 		ArrayList<Token> newTokens = new ArrayList<>();
 		ArrayList<Token> openingPunctuations = new ArrayList<>();
 		ArrayList<Token> closingPunctuations = new ArrayList<>();
@@ -105,11 +129,16 @@ public class Token {
 		int newEnd = getClosingPunctuations(closingPunctuations);
 
 		if (newBegin > this.beginToken || newEnd < this.endToken) {
-			Token coreToken = getCoreToken(newBegin, newEnd);
-			restoreAbbreviations(coreToken, closingPunctuations);
-			newTokens.addAll(openingPunctuations);
-			newTokens.add(coreToken);
-			newTokens.addAll(closingPunctuations);
+			if (newBegin >= newEnd) {
+				// this is the case when a token consists of punctuations only
+				newTokens.addAll(openingPunctuations);
+			} else {
+				Token coreToken = getCoreToken(newBegin, newEnd);
+				restoreAbbreviations(coreToken, closingPunctuations);
+				newTokens.addAll(openingPunctuations);
+				newTokens.add(coreToken);
+				newTokens.addAll(closingPunctuations);
+			}
 			debug(this.toString());
 			for (Token tok : newTokens) debug("   " + tok);
 			return newTokens; }
@@ -124,8 +153,8 @@ public class Token {
 	 * @param newEnd
 	 * @return
 	 */
-	private Token getCoreToken(int newBegin, int newEnd) {
-
+	private Token getCoreToken(int newBegin, int newEnd)
+	{
 		int p0 = this.beginToken;
 		String newText = this.text.substring(newBegin - p0, newEnd - p0);
 		Token newToken = new Token(newText, newBegin, newEnd);
@@ -136,8 +165,8 @@ public class Token {
 		return newToken;
 	}
 
-	private int getOpeningPunctuations(ArrayList<Token> openingPunctuations) {
-
+	private int getOpeningPunctuations(ArrayList<Token> openingPunctuations)
+	{
 		int p0 = this.beginToken;
 		int p = 0;
 		while (p < this.text.length()) {
@@ -154,8 +183,8 @@ public class Token {
 		return newBegin;
 	}
 
-	private int getClosingPunctuations(ArrayList<Token> closingPunctuations) {
-
+	private int getClosingPunctuations(ArrayList<Token> closingPunctuations)
+	{
 		int p0 = this.beginToken;
  		int p = this.text.length() - 1;
 		while (p >= 0) {
@@ -176,7 +205,8 @@ public class Token {
 	 * @param coreToken
 	 * @param punctuations
 	 */
-	private void restoreAbbreviations(Token coreToken, ArrayList<Token> puncts) {
+	private void restoreAbbreviations(Token coreToken, ArrayList<Token> puncts)
+	{
 		if (puncts.size() > 0
 				&& puncts.get(0).isPeriod()
 				&& Abbreviations.ABBREVS.contains(coreToken.text + ".")) {
@@ -186,7 +216,8 @@ public class Token {
 		}
 	}
 
-	private void debug(String text) {
+	private void debug(String text)
+	{
 		if (DEBUG)
 			System.out.println(text);
 	}

@@ -6,7 +6,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 
@@ -31,33 +35,45 @@ public class Tokenizer {
      * Debugging method to run the Tokenizer on the example text in the resources.
      * @throws IOException
      */
-    public final void test() throws IOException {
+    public final void test() throws IOException
+	{
 		this.filename = defaultInput;
 		readResource();
         tokenize();
         this.result.printSentences();
     }
 
-    public final TokenizedText tokenizeText(String text) {
+    public final TokenizedText tokenizeText(String text)
+	{
 		this.text = text;
         this.length = text.length();
         tokenize();
         return this.result;
     }
 
-    public final TokenizedText tokenizeFile(File fname) throws IOException {
+    public final TokenizedText tokenizeFile(File fname) throws IOException
+	{
 		this.filename = fname.getAbsolutePath();
         readFile();
         tokenize();
         return this.result;
     }
 
-    public final void tokenize() {
+	public final TokenizedText tokenizeFile(File fname, File tokens) throws IOException {
+		this.filename = fname.getAbsolutePath();
+        readFile();
+		readTokens(tokens);
+        split();
+        return this.result;
+    }
+
+    public final void tokenize()
+	{
 		this.tokens = new ArrayList<>();
 		this.sentences = new ArrayList<>();
         this.result = new TokenizedText();
         this.result.startTime = System.nanoTime();
-		readTokens();
+		splitTextIntoTokens();
 		linkTokens();
 		splitPunctuations();
 		splitSentences();
@@ -66,8 +82,15 @@ public class Tokenizer {
         this.result.endTime = System.nanoTime();
     }
 
-    public final void split() {
+    public final void split()
+	{
+        this.result = new TokenizedText();
+        this.result.startTime = System.nanoTime();
+		this.sentences = new ArrayList<>();
         splitSentences();
+        this.result.sentences = this.sentences;
+        this.result.tokens = this.tokens;
+        this.result.endTime = System.nanoTime();
     }
 
 
@@ -75,7 +98,8 @@ public class Tokenizer {
         this.result.printSentences();
     }
 
-	private void readTokens() {
+	private void splitTextIntoTokens()
+	{
 		int offset = 0;
 		while (offset < this.length) {
 			Token token = slurpToken(offset);
@@ -94,7 +118,8 @@ public class Tokenizer {
 	 * token as well as the text of the token and an indication of where leading
 	 * whitespace started
 	 */
-	private Token slurpToken(int offset) {
+	private Token slurpToken(int offset)
+	{
 		int beginSpace = offset;
 		offset = consumeSpace(offset);
 		int beginToken = offset;
@@ -116,7 +141,8 @@ public class Tokenizer {
 	 * @param offset
 	 * @return the offset immediately after the final whitespace found
 	 */
-	private int consumeSpace(int offset) {
+	private int consumeSpace(int offset)
+	{
 		while (offset < this.length) {
 			char c = this.text.charAt(offset);
 			if (Character.isWhitespace(c))
@@ -139,12 +165,27 @@ public class Tokenizer {
 		this.length = this.text.length();
 	}
 
-    private void readFile() throws FileNotFoundException {
+    private void readFile() throws FileNotFoundException
+	{
         this.text = new Scanner(new File(this.filename)).useDelimiter("\\A").next();
 		this.length = this.text.length();
     }
 
-	private void linkTokens() {
+	private void readTokens(File tokens) throws IOException
+	{
+		String path = tokens.getPath();
+		List<String> toks = Files.readAllLines(Paths.get(path), Charset.forName("UTF-8"));
+		this.tokens = new ArrayList<>();
+		for (String tok : toks) {
+			String[] fields = tok.split(" ");
+			Token token = new Token(fields);
+			//System.out.println(token);
+			this.tokens.add(token); }
+		linkTokens();
+	}
+
+	private void linkTokens()
+	{
 		//this.firstToken = this.tokens.get(0);
 		for (int i=0 ; i < this.tokens.size() - 1 ; i++) {
 			Token t1 = this.tokens.get(i);
@@ -153,8 +194,8 @@ public class Tokenizer {
 			t2.previous = t1; }
 	}
 
-	private void splitPunctuations() {
-
+	private void splitPunctuations()
+	{
 		ArrayList<Token> newTokens = new ArrayList<>();
 		ArrayList<Token> splitToken;
 		for (Token tok : this.tokens) {
@@ -169,12 +210,14 @@ public class Tokenizer {
 			debug(tok.toString());
 	}
 
-	private void debug(String text) {
+	private void debug(String text)
+	{
 		if (DEBUG)
 			System.out.println(text);
 	}
 
-	private void splitSentences() {
+	private void splitSentences()
+	{
 		Sentence sentence = new Sentence();
 		this.sentences.add(sentence);
 		for (Token tok : this.tokens) {
