@@ -43,6 +43,13 @@ public class Tokenizer {
         this.result.printSentences();
     }
 
+	/**
+	 * Tokenize and split the text in the given string and return an instance of
+	 * TokenixedText.
+	 *
+	 * @param text
+	 * @return
+	 */
     public final TokenizedText tokenizeText(String text)
 	{
 		this.text = text;
@@ -51,6 +58,13 @@ public class Tokenizer {
         return this.result;
     }
 
+	/**
+	 * Tokenize and split the contents of a file.
+	 *
+	 * @param fname The input file, intended to contain text only.
+	 * @return TokenizedText with token and sentence annotations
+	 * @throws IOException
+	 */
     public final TokenizedText tokenizeFile(File fname) throws IOException
 	{
 		this.filename = fname.getAbsolutePath();
@@ -59,7 +73,36 @@ public class Tokenizer {
         return this.result;
     }
 
-	public final TokenizedText tokenizeFile(File fname, File tokens) throws IOException {
+	/**
+	 * Sentence splitting over a text. Takes a text as well as a list of
+	 * instances of Token with token annotations over the text and generates
+	 * sentence annotations.
+	 *
+	 * @param text
+	 * @param tokens
+	 * @return TokenizedText with token annotations and sentence annotations, the
+	 * token annotations are taken from the tokens argument
+	 */
+	public final TokenizedText splitText(String text, ArrayList<Token> tokens)
+	{
+		this.text = text;
+        this.length = text.length();
+		this.tokens = tokens;
+		split();
+		return this.result;
+	}
+
+	/**
+	 * Reads a file with text as well as a file that contains token offsets,
+	 * splits file by adding sentence annotations, then returns an instance of
+	 * TokenizedText.
+	 *
+	 * @param fname
+	 * @param tokens
+	 * @return
+	 * @throws IOException
+	 */
+	public final TokenizedText splitFile(File fname, File tokens) throws IOException {
 		this.filename = fname.getAbsolutePath();
         readFile();
 		readTokens(tokens);
@@ -165,12 +208,25 @@ public class Tokenizer {
 		this.length = this.text.length();
 	}
 
+	/**
+	 * Read a file using the filename stored in this.filename.
+	 *
+	 * Puts the contents into this.text and the length of the text in this.length.
+	 *
+	 * @throws FileNotFoundException
+	 */
     private void readFile() throws FileNotFoundException
 	{
         this.text = new Scanner(new File(this.filename)).useDelimiter("\\A").next();
 		this.length = this.text.length();
     }
 
+	/**
+	 * Read tokens from a file and add them to the tokens variable.
+	 *
+	 * @param tokens the file to read from
+	 * @throws IOException
+	 */
 	private void readTokens(File tokens) throws IOException
 	{
 		String path = tokens.getPath();

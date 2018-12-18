@@ -53,18 +53,40 @@ public class Token {
 		initialize(text, beginToken, beginToken, endToken);
 	}
 
+	/**
+	 * Create a token from a string. The string is either something like
+	 * "p1 p2 p3 text" or something like "p1 p2 text". In the first case p1 is
+	 * the beginning of the space before the token, p2 the beginning of the token
+	 * and p3 the end of the token. In the second case p1 is both the beginning of
+	 * the space before the token and the beginning of the token (that is, there
+	 * is no space).
+	 *
+	 * @param args
+	 */
 	public Token(String[] args)
 	{
 		if (args.length == 3)
 			initialize(
-					args[2], Integer.parseInt(args[0]),
-					Integer.parseInt(args[0]), Integer.parseInt(args[1]));
+					args[2],
+					Integer.parseInt(args[0]),
+					Integer.parseInt(args[0]),
+					Integer.parseInt(args[1]));
 		else if (args.length == 4)
 			initialize(
-					args[3], Integer.parseInt(args[0]),
-					Integer.parseInt(args[1]), Integer.parseInt(args[2]));
+					args[3],
+					Integer.parseInt(args[0]),
+					Integer.parseInt(args[1]),
+					Integer.parseInt(args[2]));
 	}
 
+	/**
+	 * Utility method to initialize a Token when you create it from a string.
+	 *
+	 * @param text
+	 * @param beginSpace
+	 * @param beginToken
+	 * @param endToken
+	 */
 	private void initialize(String text, int beginSpace, int beginToken, int endToken)
 	{
 		this.text = text;
