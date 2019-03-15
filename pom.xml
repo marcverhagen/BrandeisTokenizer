@@ -10,6 +10,20 @@
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
 	</properties>
+	<!-- for uiploading to Brandeis Maven repository -->
+	    <distributionManagement>
+        <repository>
+            <id>brandeis-nexus</id>
+            <name>Releases</name>
+            <url>${brandeis.nexus.baseurl}/repository/maven-releases/</url>
+        </repository>
+        <snapshotRepository>
+            <id>brandeis-nexus</id>
+            <name>Snapshot</name>
+            <url>${brandeis.nexus.baseurl}/repository/maven-snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
+
 	<build>
 		<plugins>
 			<plugin>
